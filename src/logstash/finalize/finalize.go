@@ -125,11 +125,11 @@ func (gf *Finalizer) CreateStartupEnvironment(tempDir string) error {
 
 				if [ -n "$LS_CURATOR_ENABLED" ] ; then
 					echo "--> running Curator once to create the Logstash index for today"
-					echo "    !! Curator is currently disabled !!"
-					#${HOME}/bin/curator.sh
+					#echo "    !! Curator is currently disabled !!"
+					${HOME}/bin/curator.sh
 
 					echo "--> starting Ofelia for Curator in the background"
-					#$OFELIA_HOME/ofelia daemon --config ${HOME}/ofelia/schedule.ini 2>&1 &
+					$OFELIA_HOME/ofelia daemon --config ${HOME}/ofelia/schedule.ini 2>&1 &
 				fi
 
 				chmod +x $HOME/bin/*.sh

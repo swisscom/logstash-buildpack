@@ -542,7 +542,7 @@ func (gs *Supplier) PrepareCurator() error {
 		return err
 	}
 
-	//create Curator start script
+	//create ofelia schedule.ini
 	content = util.TrimLines(fmt.Sprintf(`
 				[job-local "curator"]
 				schedule = %s
