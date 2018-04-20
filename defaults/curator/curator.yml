@@ -6,7 +6,7 @@ client:
   certificate:
   client_cert:
   client_key:
-  http_auth: {{ jsonQuery .Env.VCAP_SERVICES `*[?name=='<<.Env.SERVICE_INSTANCE_NAME>>'].credentials.<<.Env.CREDENTIALS_USERNAME_FIELD>> | [0][0]` }}:{{ jsonQuery .Env.VCAP_SERVICES `*[?name=='<<.Env.SERVICE_INSTANCE_NAME>>'].credentials.<<.Env.CREDENTIALS_PASSWORD_FIELD>> | [0][0]` }}
+  http_auth: "{{ replace (jsonQuery .Env.VCAP_SERVICES `*[?name=='<<.Env.SERVICE_INSTANCE_NAME>>'].credentials.<<.Env.CREDENTIALS_USERNAME_FIELD>> | [0][0]`) `"` "" -1 }}:{{ replace (jsonQuery .Env.VCAP_SERVICES `*[?name=='<<.Env.SERVICE_INSTANCE_NAME>>'].credentials.<<.Env.CREDENTIALS_PASSWORD_FIELD>> | [0][0]`) `"` "" -1 }}"
   timeout: 30
   master_only: False
 
