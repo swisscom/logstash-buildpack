@@ -533,7 +533,7 @@ func (gs *Supplier) PrepareCurator() error {
 				export LC_ALL=en_US.UTF-8
 				export LANG=en_US.UTF-8
 				export PATH=${CURATOR_HOME}/python3/bin:${CURATOR_HOME}/curator/bin:${PATH}
-				${CURATOR_HOME}/python3/bin/python3 ${CURATOR_HOME}/curator/bin/curator --config ${HOME}/curator.d/curator.yml ${HOME}/curator.d/actions.yml
+				${CURATOR_HOME}/python3/bin/python3 ${CURATOR_HOME}/curator/bin/curator --config ${HOME}/curator.conf.d/curator.yml ${HOME}/curator.conf.d/actions.yml
 				`))
 
 	err := ioutil.WriteFile(filepath.Join(gs.Stager.DepDir(), "curator", "curator.sh"), []byte(content), 0755)
@@ -569,6 +569,7 @@ func (gs *Supplier) PrepareCurator() error {
 		}
 
 	}
+
 
 	return nil
 }
