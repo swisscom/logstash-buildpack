@@ -43,9 +43,9 @@ dependencies:
   cf_stacks:
   - cflinuxfs2
 - name: curator
-  version: 5.0.4
-  uri: https://swisscom-buildpacks.scapp.io/dependencies/elk/curator-5.0.4-python-3.6.1.tar.gz
-  sha256: 229691d0d5367c10b56a6d2971af4132fcba56ac70eab84dce388636fd08eb71
+  version: 5.5.1
+  uri: https://swisscom-buildpacks.scapp.io/dependencies/elk/curator-5.5.1-python-3.6.5.tar.gz
+  sha256: b378c489f005d574041b5be1ea973dd703e5e2e29f6a3a43393818d18ce9ff60
   cf_stacks:
   - cflinuxfs2
 - name: gte
