@@ -529,11 +529,11 @@ func (gs *Supplier) PrepareCurator() error {
 	content := util.TrimLines(fmt.Sprintf(`
 				#!/bin/bash
 				export PYTHONHOME=${CURATOR_HOME}/python3
-				export PYTHONPATH=${CURATOR_HOME}/curator/lib/python3.4/site-packages
+				export PYTHONPATH=${CURATOR_HOME}/curator/lib/python3.6/site-packages
 				export LC_ALL=en_US.UTF-8
 				export LANG=en_US.UTF-8
 				export PATH=${CURATOR_HOME}/python3/bin:${CURATOR_HOME}/curator/bin:${PATH}
-				${CURATOR_HOME}/python3/bin/python3 ${CURATOR_HOME}/curator/bin/curator --config ${HOME}/curator.conf.d/curator.yml ${HOME}/curator.conf.d/actions.yml
+				${CURATOR_HOME}/python3/bin/python3.6m ${CURATOR_HOME}/curator/bin/curator --config ${HOME}/curator.conf.d/curator.yml ${HOME}/curator.conf.d/actions.yml
 				`))
 
 	err := ioutil.WriteFile(filepath.Join(gs.Stager.DepDir(), "curator", "curator.sh"), []byte(content), 0755)
