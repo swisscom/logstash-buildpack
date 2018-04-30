@@ -32,6 +32,7 @@ URLLIB3_TARGET="urllib3-1.22.tar.gz"
 VOLUPTUOUS_URL="https://github.com/alecthomas/voluptuous/archive/0.9.3.tar.gz"
 VOLUPTUOUS_TARGET="voluptuous-0.9.3.tar.gz"
 
+BUILDDIR=/home/vcap/deps/0/curator-${CURATOR_VERSION}
 
 	echo "Download python"
     mkdir -p ${BUILDDIR}/python3
@@ -89,16 +90,16 @@ VOLUPTUOUS_TARGET="voluptuous-0.9.3.tar.gz"
 	export PATH=${BUILDDIR}/python3/bin:$PATH
     # --no-index prevents contacting pypi to download packages
     # --find-links tells pip where to look for the dependancies
-    pip3 install --no-index --find-links ${CACHEDIR}/curator --install-option="--prefix=${BUILDDIR}/curator" elasticsearch-curator
+    ${BUILDDIR}/python3/bin/pip3 install --no-index --find-links ${CACHEDIR}/curator --install-option="--prefix=${BUILDDIR}/curator" 'elasticsearch-curator>=5.5.1'
 
     echo "Installed to ${BUILDDIR}/curator"
     find ${BUILDDIR}/curator
 	cd ${BUILDDIR}
 	
 	echo "Create tarball curator-${CURATOR_VERSION}-python-${PYTHON_VERSION}.tar.gz"
-	tar czf ${BUILDDIR}/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz curator python3
+	tar czf /home/vcap/app/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz curator python3
 	
-	if [ ! -f ${BUILDDIR}/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz ]; then
+	if [ ! -f /home/vcap/app/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz ]; then
 		echo "ERROR creating tarball !"
 		return
 	fi
