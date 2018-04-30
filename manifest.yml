@@ -45,7 +45,7 @@ dependencies:
 - name: curator
   version: 5.5.1
   uri: https://swisscom-buildpacks.scapp.io/dependencies/elk/curator-5.5.1-python-3.6.5.tar.gz
-  sha256: 3ae85eaf369a767340f6a17a0fc8cd24d0486bbd1e07c27fedae2f670e18c93e
+  sha256: b378c489f005d574041b5be1ea973dd703e5e2e29f6a3a43393818d18ce9ff60
   cf_stacks:
   - cflinuxfs2
 - name: gte
