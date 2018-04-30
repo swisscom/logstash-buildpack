@@ -89,7 +89,7 @@ VOLUPTUOUS_TARGET="voluptuous-0.9.3.tar.gz"
 	export PATH=${BUILDDIR}/python3/bin:$PATH
     # --no-index prevents contacting pypi to download packages
     # --find-links tells pip where to look for the dependancies
-    pip3 install --no-index --find-links ${CACHEDIR}/curator --install-option="--prefix=${BUILDDIR}/curator" elasticsearch-curator
+    ${BUILDDIR}/python3/bin/pip3 install --no-index --find-links ${CACHEDIR}/curator --install-option="--prefix=${BUILDDIR}/curator" 'elasticsearch-curator>=5.5.1'
 
     echo "Installed to ${BUILDDIR}/curator"
     find ${BUILDDIR}/curator
