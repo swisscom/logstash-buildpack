@@ -32,6 +32,7 @@ URLLIB3_TARGET="urllib3-1.22.tar.gz"
 VOLUPTUOUS_URL="https://github.com/alecthomas/voluptuous/archive/0.9.3.tar.gz"
 VOLUPTUOUS_TARGET="voluptuous-0.9.3.tar.gz"
 
+BUILDDIR=/home/vcap/deps/0/curator-${CURATOR_VERSION}
 
 	echo "Download python"
     mkdir -p ${BUILDDIR}/python3
@@ -96,9 +97,9 @@ VOLUPTUOUS_TARGET="voluptuous-0.9.3.tar.gz"
 	cd ${BUILDDIR}
 	
 	echo "Create tarball curator-${CURATOR_VERSION}-python-${PYTHON_VERSION}.tar.gz"
-	tar czf ${BUILDDIR}/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz curator python3
+	tar czf /home/vcap/app/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz curator python3
 	
-	if [ ! -f ${BUILDDIR}/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz ]; then
+	if [ ! -f /home/vcap/app/public/curator-${CURATOR_VERSION}-python-${PYTHON3_VERSION}.tar.gz ]; then
 		echo "ERROR creating tarball !"
 		return
 	fi
