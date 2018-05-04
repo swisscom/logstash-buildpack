@@ -46,6 +46,7 @@ type Supplier struct {
 	Jq                 Dependency
 	Ofelia             Dependency
 	Curator            Dependency
+	Python3            Dependency
 	OpenJdk            Dependency
 	Logstash           Dependency
 	LogstashPlugins    Dependency
@@ -128,7 +129,16 @@ func Run(gs *Supplier) error {
 		if err := gs.InstallDependencyOfelia(); err != nil {
 			return err
 		}
+		if err := gs.InstallDependencyPython3(); err != nil {
+			return err
+		}
 		if err := gs.InstallDependencyCurator(); err != nil {
+			return err
+		}
+		if err := gs.CompilePython3(); err != nil {
+			return err
+		}
+		if err := gs.PipInstallCurator(); err != nil {
 			return err
 		}
 
@@ -337,15 +347,22 @@ func (gs *Supplier) PrepareAppDirStructure() error {
 		return err
 	}
 
-	//create dir curator in DepDir
-	dir = filepath.Join(gs.Stager.DepDir(), "curator")
+	//create dir scripts in DepDir
+	dir = filepath.Join(gs.Stager.DepDir(), "scripts")
 	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		return err
 	}
 
-	//create dir ofelia in DepDir
-	dir = filepath.Join(gs.Stager.DepDir(), "ofelia")
+	//create dir ofelia/scripts in DepDir
+	dir = filepath.Join(gs.Stager.DepDir(), "ofelia", "scripts")
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		return err
+	}
+
+	//create dir ofelia/config in DepDir
+	dir = filepath.Join(gs.Stager.DepDir(), "ofelia", "config")
 	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		return err
@@ -500,6 +517,52 @@ func (gs *Supplier) InstallDependencyOfelia() error {
 	return nil
 }
 
+func (gs *Supplier) InstallDependencyPython3() error {
+
+	var err error
+	gs.Python3, err = gs.NewDependency("python3", 3, "")
+	if err != nil {
+		return err
+	}
+
+	if err := gs.InstallDependency(gs.Curator); err != nil {
+		return err
+	}
+
+	content := util.TrimLines(fmt.Sprintf(`
+				export PYTHONHOME=$DEPS_DIR/%s
+				PATH=${PYTHONHOME}/bin:${PATH}
+				`, "python3"))
+
+	if err := gs.WriteDependencyProfileD(gs.Python3.Name, content); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gs *Supplier) CompilePython3() error {
+
+	scriptName := "compile_python3"
+	content := util.TrimLines(fmt.Sprintf(`
+				#!/bin/bash
+				cd %s
+				./configure --prefix=%s
+				make
+				make install
+				`,  filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Stager.DepDir())))
+
+	if err := gs.WriteScript(scriptName, content); err != nil {
+		return err
+	}
+
+	if err := gs.ExecScript(scriptName); err != nil {
+		return err
+	}
+
+
+	return nil
+}
+
 func (gs *Supplier) InstallDependencyCurator() error {
 
 	var err error
@@ -514,12 +577,36 @@ func (gs *Supplier) InstallDependencyCurator() error {
 
 	content := util.TrimLines(fmt.Sprintf(`
 				export CURATOR_HOME=$DEPS_DIR/%s
-				PATH=${CURATOR_HOME}/python3/bin:${CURATOR_HOME}/curator/bin:${PATH}
-				`, gs.Curator.RuntimeLocation))
+				export PYTHONPATH=${CURATOR_HOME}/site-packages
+				PATH=${CURATOR_HOME}/bin:${PATH}
+				`, "curator"))
 
 	if err := gs.WriteDependencyProfileD(gs.Curator.Name, content); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (gs *Supplier) PipInstallCurator() error {
+
+	scriptName := "pip_install_curator"
+	content := util.TrimLines(fmt.Sprintf(`
+				#!/bin/bash
+				export PATH=%s/python3/bin:$PATH
+    			# --no-index prevents contacting pypi to download packages
+    			# --find-links tells pip where to look for the dependancies
+    			pip3 install --no-index --find-links %s/dependencies --install-option="--prefix=%s/curator" --target="%s/curator/site-packages" elasticsearch-curator
+				`,  filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Stager.DepDir()) ))
+
+	if err := gs.WriteScript(scriptName, content); err != nil {
+		return err
+	}
+
+	if err := gs.ExecScript(scriptName); err != nil {
+		return err
+	}
+
+
 	return nil
 }
 
@@ -528,15 +615,12 @@ func (gs *Supplier) PrepareCurator() error {
 	//create Curator start script
 	content := util.TrimLines(fmt.Sprintf(`
 				#!/bin/bash
-				export PYTHONHOME=${CURATOR_HOME}/python3
-				export PYTHONPATH=${CURATOR_HOME}/curator/lib/python3.6/site-packages
 				export LC_ALL=en_US.UTF-8
 				export LANG=en_US.UTF-8
-				export PATH=${CURATOR_HOME}/python3/bin:${CURATOR_HOME}/curator/bin:${PATH}
-				${CURATOR_HOME}/python3/bin/python3.6m ${CURATOR_HOME}/curator/bin/curator --config ${HOME}/curator.conf.d/curator.yml ${HOME}/curator.conf.d/actions.yml
+				${PYTHONHOME}/bin/python3 ${CURATOR_HOME}/bin/curator --config ${HOME}/curator.conf.d/curator.yml ${HOME}/curator.conf.d/actions.yml
 				`))
 
-	err := ioutil.WriteFile(filepath.Join(gs.Stager.DepDir(), "curator", "curator.sh"), []byte(content), 0755)
+	err := ioutil.WriteFile(filepath.Join(gs.Stager.DepDir(), "ofelia", "scripts", "curator.sh"), []byte(content), 0755)
 	if err != nil {
 		gs.Log.Error("Unable to create Curator start script: %s", err.Error())
 		return err
@@ -550,7 +634,7 @@ func (gs *Supplier) PrepareCurator() error {
 				`,
 		gs.LogstashConfig.Curator.Schedule))
 
-	err = ioutil.WriteFile(filepath.Join(gs.Stager.DepDir(), "ofelia", "schedule.ini"), []byte(content), 0644)
+	err = ioutil.WriteFile(filepath.Join(gs.Stager.DepDir(), "ofelia", "config", "schedule.ini"), []byte(content), 0644)
 	if err != nil {
 		gs.Log.Error("Unable to create Ofelia schedule.ini: %s", err.Error())
 		return err

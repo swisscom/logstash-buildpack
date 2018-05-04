@@ -11,6 +11,8 @@ default_versions:
   version: '1.8.x'
 - name: curator
   version: '5.5.x'
+- name: python3
+  version: '3.6.x'
 - name: gte
   version: '1.0.x'
 - name: jq
@@ -44,8 +46,14 @@ dependencies:
   - cflinuxfs2
 - name: curator
   version: 5.5.1
-  uri: https://swisscom-buildpacks.scapp.io/dependencies/elk/curator-5.5.1-python-3.6.5.tar.gz
-  sha256: b378c489f005d574041b5be1ea973dd703e5e2e29f6a3a43393818d18ce9ff60
+  uri: https://swisscom-buildpacks.scapp.io/dependencies/elk/curator-5.5.1.tar.gz
+  sha256: f9406e713e904ee8f22e9c33bf1a3838bcf0273ca2063774cc43d3c0f4c4f492
+  cf_stacks:
+  - cflinuxfs2
+- name: python3
+  version: 3.6.5
+  uri: https://swisscom-buildpacks.scapp.io/dependencies/python/python-3.6.5.tar.gz
+  sha256: 53a3e17d77cd15c5230192b6a8c1e031c07cd9f34a2f089a731c6f6bd343d5c6
   cf_stacks:
   - cflinuxfs2
 - name: gte

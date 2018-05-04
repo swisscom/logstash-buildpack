@@ -111,8 +111,8 @@ func (gf *Finalizer) CreateStartupEnvironment(tempDir string) error {
 				$GTE_HOME/gte $HOME/curator.d $HOME/curator.conf.d
 				$GTE_HOME/gte $LS_ROOT/curator.d $HOME/curator.conf.d
 
-				$GTE_HOME/gte $LS_ROOT/curator $HOME/bin
-				$GTE_HOME/gte $LS_ROOT/ofelia $HOME/ofelia
+				$GTE_HOME/gte $LS_ROOT/ofelia/scripts $HOME/bin
+				$GTE_HOME/gte $LS_ROOT/ofelia/config $HOME/ofelia
 
 				echo "--> STARTING LOGSTASH ..."
 				if [ -n "$LS_CMD_ARGS" ] ; then
