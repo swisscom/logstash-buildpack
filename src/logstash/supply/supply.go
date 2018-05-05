@@ -616,8 +616,8 @@ func (gs *Supplier) PipInstallCurator() error {
 				export PATH=%s/python3/bin:$PATH
     			# --no-index prevents contacting pypi to download packages
     			# --find-links tells pip where to look for the dependancies
-    			pip3 install --no-index --find-links %s/dependencies --install-option="--prefix=%s/curator" --target "%s/curator/site-packages" elasticsearch-curator -v
-				`,  filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Stager.DepDir()) ))
+    			pip3 install --no-index --find-links %s/dependencies --target "%s/curator/site-packages" elasticsearch-curator -v
+				`,  filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir()) ))
 
 	if err := gs.WriteScript(scriptName, content); err != nil {
 		gs.Log.Error("Error WriteScript %s: %s", scriptName, err.Error())
