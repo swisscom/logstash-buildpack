@@ -551,6 +551,7 @@ func (gs *Supplier) CompilePython3() error {
 	scriptName := "compile_python3"
 	content := util.TrimLines(fmt.Sprintf(`
 				#!/bin/bash
+				ls -al
 				cd %s
 				./configure --prefix=%s
 				make
