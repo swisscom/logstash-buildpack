@@ -568,10 +568,12 @@ func (gs *Supplier) InstallDependencyCurator() error {
 	var err error
 	gs.Curator, err = gs.NewDependency("curator", 3, "")
 	if err != nil {
+		gs.Log.Error("Error InstallDependencyCurator 0: %s", err.Error())
 		return err
 	}
 
 	if err := gs.InstallDependency(gs.Curator); err != nil {
+		gs.Log.Error("Error InstallDependencyCurator 1: %s", err.Error())
 		return err
 	}
 
@@ -582,8 +584,10 @@ func (gs *Supplier) InstallDependencyCurator() error {
 				`, "curator"))
 
 	if err := gs.WriteDependencyProfileD(gs.Curator.Name, content); err != nil {
+		gs.Log.Error("Error InstallDependencyCurator 2: %s", err.Error())
 		return err
 	}
+	gs.Log.Info("InstallDependencyCurator done")
 	return nil
 }
 
