@@ -159,7 +159,9 @@ func (gs *Supplier) WriteScript(scriptName, scriptContents string) error {
 func (gs *Supplier) ExecScript(scriptName string) error {
 	scriptsDir := filepath.Join(gs.Stager.DepDir(), "scripts")
 
-	err := exec.Command("/bin/sh", filepath.Join(scriptsDir, scriptName) ).Run()
+	out, err := exec.Command("/bin/sh", filepath.Join(scriptsDir, scriptName) ).CombinedOutput()
+	gs.Log.Info(string(out))
+
 	if err != nil {
 		return err
 	}
