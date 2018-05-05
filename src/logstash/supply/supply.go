@@ -560,7 +560,7 @@ func (gs *Supplier) CompilePython3() error {
 				#!/bin/bash
 				CPUS=` + "`grep -c ^processor /proc/cpuinfo`" + `
 				cd %s/python3
-				./configure --with-zlib --prefix=%s/python3
+				./configure --prefix=%s/python3
 				make -j${CPUS}
 				make install
 				`,  filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Stager.DepDir())))
@@ -616,7 +616,7 @@ func (gs *Supplier) PipInstallCurator() error {
 				export PATH=%s/python3/bin:$PATH
     			# --no-index prevents contacting pypi to download packages
     			# --find-links tells pip where to look for the dependancies
-    			pip3 install --no-index --find-links %s/dependencies --install-option="--prefix=%s/curator" --target="%s/curator/site-packages" elasticsearch-curator
+    			pip3 install --no-index --find-links %s/dependencies --install-option="--prefix=%s/curator" --target="%s/curator/site-packages" elasticsearch-curator -v
 				`,  filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Stager.DepDir()) ))
 
 	if err := gs.WriteScript(scriptName, content); err != nil {
