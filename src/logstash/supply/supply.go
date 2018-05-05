@@ -599,13 +599,16 @@ func (gs *Supplier) PipInstallCurator() error {
 				`,  filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Stager.DepDir()) ))
 
 	if err := gs.WriteScript(scriptName, content); err != nil {
+		gs.Log.Error("Error WriteScript %s: %s", scriptName, err.Error())
 		return err
 	}
 
 	if err := gs.ExecScript(scriptName); err != nil {
+		gs.Log.Error("Error ExecScript %s: %s", scriptName, err.Error())
 		return err
 	}
 
+	gs.Log.Info("PipInstallCurator done")
 
 	return nil
 }
