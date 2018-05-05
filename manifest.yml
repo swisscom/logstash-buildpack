@@ -53,7 +53,7 @@ dependencies:
 - name: python3
   version: 3.6.5
   uri: https://swisscom-buildpacks.scapp.io/dependencies/python/python-3.6.5.tar.gz
-  sha256: 53a3e17d77cd15c5230192b6a8c1e031c07cd9f34a2f089a731c6f6bd343d5c6
+  sha256: 0974090807dd66e19d862dabd78aff496563dd862630674a95c9f9c98e447729
   cf_stacks:
   - cflinuxfs2
 - name: gte
