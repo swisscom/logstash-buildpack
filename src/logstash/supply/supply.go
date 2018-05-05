@@ -558,9 +558,10 @@ func (gs *Supplier) CompilePython3() error {
 	scriptName := "compile_python3"
 	content := util.TrimLines(fmt.Sprintf(`
 				#!/bin/bash
+				CPUS=` + "`grep -c ^processor /proc/cpuinfo`" + `
 				cd %s/python3
 				./configure --with-zlib --prefix=%s/python3
-				make
+				make -j${CPUS}
 				make install
 				`,  filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Stager.DepDir())))
 
