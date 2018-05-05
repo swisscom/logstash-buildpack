@@ -45,9 +45,9 @@ dependencies:
   cf_stacks:
   - cflinuxfs2
 - name: curator
-  version: 5.5.1
-  uri: https://swisscom-buildpacks.scapp.io/dependencies/elk/curator-5.5.1.tar.gz
-  sha256: f2ee3cb8dc8c9ed5ccf5e067ed52ac2169068304220cd7d850f96818e166a860
+  version: 5.4.1
+  uri: https://swisscom-buildpacks.scapp.io/dependencies/elk/curator-5.4.1.tar.gz
+  sha256: c905724e8c3ff5b2389b7b2d63caf12fcb79f440ff95c382772f7097f5787c54
   cf_stacks:
   - cflinuxfs2
 - name: python3
