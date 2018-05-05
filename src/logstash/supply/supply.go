@@ -522,10 +522,12 @@ func (gs *Supplier) InstallDependencyPython3() error {
 	var err error
 	gs.Python3, err = gs.NewDependency("python3", 3, "")
 	if err != nil {
+		gs.Log.Error("Error InstallDependencyPython3 0: %s", err.Error())
 		return err
 	}
 
 	if err := gs.InstallDependency(gs.Python3); err != nil {
+		gs.Log.Error("Error InstallDependencyPython3 1: %s", err.Error())
 		return err
 	}
 
@@ -535,8 +537,12 @@ func (gs *Supplier) InstallDependencyPython3() error {
 				`, "python3"))
 
 	if err := gs.WriteDependencyProfileD(gs.Python3.Name, content); err != nil {
+		gs.Log.Error("Error InstallDependencyPython3 2: %s", err.Error())
 		return err
 	}
+
+	gs.Log.Info("InstallDependencyPython3 done")
+
 	return nil
 }
 
@@ -552,13 +558,16 @@ func (gs *Supplier) CompilePython3() error {
 				`,  filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Stager.DepDir())))
 
 	if err := gs.WriteScript(scriptName, content); err != nil {
+		gs.Log.Error("Error CompilePython3 0: %s", err.Error())
 		return err
 	}
 
 	if err := gs.ExecScript(scriptName); err != nil {
+		gs.Log.Error("Error CompilePython3 1: %s", err.Error())
 		return err
 	}
 
+	gs.Log.Info("CompilePython3 done")
 
 	return nil
 }
