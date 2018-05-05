@@ -596,7 +596,7 @@ func (gs *Supplier) InstallDependencyCurator() error {
 
 	content := util.TrimLines(fmt.Sprintf(`
 				export CURATOR_HOME=$DEPS_DIR/%s/%s
-				export PYTHONPATH=${CURATOR_HOME}/site-packages
+				export PYTHONPATH=${CURATOR_HOME}/lib/python3.6/site-packages
 				PATH=${CURATOR_HOME}/bin:${PATH}
 				`, gs.Stager.DepsIdx(), "curator"))
 
