@@ -10,6 +10,7 @@ import (
 	"logstash/util"
 	"io"
 	"os/exec"
+	"bufio"
 )
 
 
@@ -159,14 +160,38 @@ func (gs *Supplier) WriteScript(scriptName, scriptContents string) error {
 func (gs *Supplier) ExecScript(scriptName string) error {
 	scriptsDir := filepath.Join(gs.Stager.DepDir(), "scripts")
 
-	err := exec.Command("/bin/sh", filepath.Join(scriptsDir, scriptName) ).Run()
+	cmd := exec.Command("/bin/sh", filepath.Join(scriptsDir, scriptName) )
 
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
 	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	go gs.copyOutput(stdout, "stdout")
+	go gs.copyOutput(stderr, "stderr")
+	cmd.Wait()
+
 	return nil
 }
 
+func (gs *Supplier) copyOutput(r io.Reader, output string) {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		if output == "stdout" {
+			gs.Log.Info(scanner.Text())
+		}else{
+			gs.Log.Error(scanner.Text())
+		}
+	}
+}
 
 func writeToFile(source io.Reader, destFile string, mode os.FileMode) error {
 	err := os.MkdirAll(filepath.Dir(destFile), 0755)
