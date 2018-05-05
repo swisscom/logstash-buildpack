@@ -553,7 +553,7 @@ func (gs *Supplier) CompilePython3() error {
 				#!/bin/bash
 				cd %s/python3
 				ls -al
-				./configure --prefix=%s
+				./configure --with-zlib --prefix=%s
 				make
 				make install
 				`,  filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Stager.DepDir())))
