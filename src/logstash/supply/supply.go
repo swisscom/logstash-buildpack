@@ -532,9 +532,9 @@ func (gs *Supplier) InstallDependencyPython3() error {
 	}
 
 	content := util.TrimLines(fmt.Sprintf(`
-				export PYTHONHOME=$DEPS_DIR/%s
+				export PYTHONHOME=$DEPS_DIR/%s/%s
 				PATH=${PYTHONHOME}/bin:${PATH}
-				`, "python3"))
+				`, gs.Stager.DepsIdx(),  "python3"))
 
 	if err := gs.WriteDependencyProfileD(gs.Python3.Name, content); err != nil {
 		gs.Log.Error("Error InstallDependencyPython3 2: %s", err.Error())
@@ -587,10 +587,10 @@ func (gs *Supplier) InstallDependencyCurator() error {
 	}
 
 	content := util.TrimLines(fmt.Sprintf(`
-				export CURATOR_HOME=$DEPS_DIR/%s
+				export CURATOR_HOME=$DEPS_DIR/%s/%s
 				export PYTHONPATH=${CURATOR_HOME}/site-packages
 				PATH=${CURATOR_HOME}/bin:${PATH}
-				`, "curator"))
+				`, gs.Stager.DepsIdx(), "curator"))
 
 	if err := gs.WriteDependencyProfileD(gs.Curator.Name, content); err != nil {
 		gs.Log.Error("Error InstallDependencyCurator 2: %s", err.Error())
