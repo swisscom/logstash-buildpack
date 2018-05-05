@@ -520,12 +520,12 @@ func (gs *Supplier) InstallDependencyOfelia() error {
 func (gs *Supplier) InstallDependencyPython3() error {
 
 	var err error
-	gs.Python3, err = gs.NewDependency("python", 3, "")
+	gs.Python3, err = gs.NewDependency("python3", 3, "")
 	if err != nil {
 		return err
 	}
 
-	if err := gs.InstallDependency(gs.Curator); err != nil {
+	if err := gs.InstallDependency(gs.Python3); err != nil {
 		return err
 	}
 
