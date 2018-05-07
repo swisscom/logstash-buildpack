@@ -109,7 +109,7 @@ func (gf *Finalizer) CreateStartupEnvironment(tempDir string) error {
 				$GTE_HOME/gte $LS_ROOT/grok-patterns $HOME/grok-patterns
 
 				$GTE_HOME/gte $HOME/curator.d $HOME/curator.conf.d
-				$GTE_HOME/gte $LS_ROOT/curator.d $HOME/curator.conf.d
+				$GTE_HOME/gte -n $LS_ROOT/curator.d $HOME/curator.conf.d
 
 				$GTE_HOME/gte $LS_ROOT/ofelia/scripts $HOME/bin
 				$GTE_HOME/gte $LS_ROOT/ofelia/config $HOME/ofelia
