@@ -666,8 +666,6 @@ func (gs *Supplier) PrepareCurator() error {
 	}
 
 	// pre-processing of curator config templates if no user files exist
-	if !gs.CuratorFilesExists {
-
 		templateFile := filepath.Join(gs.BPDir(), "defaults/curator")
 		destFile := filepath.Join(gs.Stager.DepDir(), "curator.d")
 
@@ -676,9 +674,6 @@ func (gs *Supplier) PrepareCurator() error {
 			gs.Log.Error("Error pre-processing curator config templates: %s", err.Error())
 			return err
 		}
-
-	}
-
 
 	return nil
 }
