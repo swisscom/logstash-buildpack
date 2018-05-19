@@ -143,6 +143,10 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 		} else {
 			err = os.Rename(tarball, extractLocation)
 		}
+		gs.Log.Info(entry.URI)
+		gs.Log.Info(extractLocation)
+		gs.Log.Info(tarball)
+		gs.Log.Info(dependency.CacheLocation)
 		if err != nil{
 			gs.Log.Error("Error extracting '%s': %s", dependency.Name, err.Error())
 			return err
