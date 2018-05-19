@@ -190,7 +190,7 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	gs.Log.BeginStep("Starting Compilation of %s", dep.FullName)
 
 	gs.Log.Info("Step 1 of 3: configure ...")
-	cmd := exec.Command("./configure", fmt.Sprintf("--prefix=%s",prefix) )
+	cmd := exec.Command("/bin/sh", filepath.Join(makeDir, "configure"), fmt.Sprintf("--prefix=%s",prefix) )
 	cmd.Dir = makeDir
 	gs.Log.Info(fmt.Sprintf("--prefix=%s",prefix))
 	stdout, err := cmd.StdoutPipe()
