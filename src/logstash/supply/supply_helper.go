@@ -228,7 +228,11 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 		go gs.copyOutput(stderr, "stderr")
 	}
 
-	cmd.Wait()
+	err = cmd.Wait()
+	if err != nil {
+		gs.Log.Info("'Configure' of %s failed", dep.FullName)
+		return err
+	}
 
 	//make
 	gs.Log.Info("Step 2 of 3: make ...")
@@ -251,7 +255,11 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 		go gs.copyOutput(stdout, "stdout")
 		go gs.copyOutput(stderr, "stderr")
 	}
-	cmd.Wait()
+	err = cmd.Wait()
+	if err != nil {
+		gs.Log.Info("'Make' of %s failed", dep.FullName)
+		return err
+	}
 	gs.Log.Info("5")
 
 	//make
@@ -277,6 +285,10 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 		go gs.copyOutput(stderr, "stderr")
 	}
 	cmd.Wait()
+	if err != nil {
+		gs.Log.Info("'Make Install' of %s failed", dep.FullName)
+		return err
+	}
 	gs.Log.Info("6")
 
 	gs.Log.Info("Compilation of %s done", dep.FullName)
