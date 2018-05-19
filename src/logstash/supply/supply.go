@@ -638,18 +638,14 @@ func (gs *Supplier) PrepareCurator() error {
 		return err
 	}
 
-	// pre-processing of curator config templates if no user files exist
-	if !gs.CuratorFilesExists {
+	// pre-processing of curator config templates
+	templateFile := filepath.Join(gs.BPDir(), "defaults/curator")
+	destFile := filepath.Join(gs.Stager.DepDir(), "curator.d")
 
-		templateFile := filepath.Join(gs.BPDir(), "defaults/curator")
-		destFile := filepath.Join(gs.Stager.DepDir(), "curator.d")
-
-		err := exec.Command(fmt.Sprintf("%s/gte", gs.GTE.StagingLocation), "-d", "<<:>>", templateFile, destFile).Run()
-		if err != nil {
-			gs.Log.Error("Error pre-processing curator config templates: %s", err.Error())
-			return err
-		}
-
+	err = exec.Command(fmt.Sprintf("%s/gte", gs.GTE.StagingLocation), "-d", "<<:>>", templateFile, destFile).Run()
+	if err != nil {
+		gs.Log.Error("Error pre-processing curator config templates: %s", err.Error())
+		return err
 	}
 
 	return nil
