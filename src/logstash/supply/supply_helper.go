@@ -144,13 +144,6 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 		} else {
 			err = os.Rename(tarball, extractLocation)
 		}
-		gs.Log.Info(entry.URI)
-		gs.Log.Info(extractLocation)
-		gs.Log.Info(tarball)
-		gs.Log.Info(dependency.CacheLocation)
-
-		gs.LsDir(extractLocation)
-		gs.LsDir(dependency.CacheLocation)
 
 		if err != nil{
 			gs.Log.Error("Error extracting '%s': %s", dependency.Name, err.Error())
@@ -206,7 +199,7 @@ func (gs *Supplier) LsDir(dir string) error{
 func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix string) error {
 
 	//configure
-	gs.Log.BeginStep("Starting Compilation of %s", dep.FullName)
+	gs.Log.BeginStep("Starting Compilation of %s (Compilation only needs to be done the first time)", dep.FullName)
 
 	gs.Log.Info("Step 1 of 3: configure ...")
 	cmd := exec.Command("/bin/sh", filepath.Join(makeDir, "configure"), fmt.Sprintf("--prefix=%s",prefix) )
@@ -226,6 +219,9 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
 		go gs.copyOutput(stdout, "stdout")
 		go gs.copyOutput(stderr, "stderr")
+	}else{
+		go gs.copyOutput(stdout, "none")
+		go gs.copyOutput(stderr, "none")
 	}
 
 	err = cmd.Wait()
@@ -235,7 +231,7 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	}
 
 	//make
-	gs.Log.Info("Step 2 of 3: make ...")
+	gs.Log.Info("Step 2 of 3: make ... (may take a few minutes!)")
 	cmd = exec.Command("make", "-j", "8")
 	cmd.Dir = makeDir
 	stdout, err = cmd.StdoutPipe()
@@ -254,6 +250,9 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
 		go gs.copyOutput(stdout, "stdout")
 		go gs.copyOutput(stderr, "stderr")
+	}else{
+		go gs.copyOutput(stdout, "none")
+		go gs.copyOutput(stderr, "none")
 	}
 	err = cmd.Wait()
 	if err != nil {
@@ -283,6 +282,9 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
 		go gs.copyOutput(stdout, "stdout")
 		go gs.copyOutput(stderr, "stderr")
+	}else{
+		go gs.copyOutput(stdout, "none")
+		go gs.copyOutput(stderr, "none")
 	}
 	cmd.Wait()
 	if err != nil {
@@ -392,8 +394,11 @@ func (gs *Supplier) ExecScript(scriptName string) error {
 	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
 		go gs.copyOutput(stdout, "stdout")
 		go gs.copyOutput(stderr, "stderr")
+	}else{
+		go gs.copyOutput(stdout, "none")
+		go gs.copyOutput(stderr, "none")
 	}
-	
+
 	err = cmd.Wait()
 	if err != nil {
 		return err
@@ -405,10 +410,13 @@ func (gs *Supplier) ExecScript(scriptName string) error {
 func (gs *Supplier) copyOutput(r io.Reader, output string) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		if output == "stdout" {
+
+		switch output {
+		case "stdout":
 			gs.Log.Info(scanner.Text())
-		}else{
+		case "stderr":
 			gs.Log.Error(scanner.Text())
+		default:
 		}
 	}
 }
