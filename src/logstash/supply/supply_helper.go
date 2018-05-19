@@ -18,7 +18,7 @@ func (gs *Supplier) BPDir() string {
 	return gs.BuildpackDir
 }
 
-func (gs *Supplier) NewDependency(name string, versionParts int, configVersion string) (Dependency, error){
+func (gs *Supplier) NewDependency(name string, versionParts int, configVersion string, doCompile bool) (Dependency, error){
 	var dependency = Dependency{Name: name, VersionParts: versionParts, ConfigVersion: configVersion}
 
 	if parsedVersion, err := gs.SelectDependencyVersion(dependency); err != nil {
@@ -26,9 +26,13 @@ func (gs *Supplier) NewDependency(name string, versionParts int, configVersion s
 		return dependency, err
 	} else {
 		dependency.Version = parsedVersion
-		dependency.DirName = dependency.Name+"-"+dependency.Version
+		dependency.DoCompile = doCompile
+		dependency.FullName = dependency.Name+"-"+dependency.Version
 		dependency.RuntimeLocation = gs.EvalRuntimeLocation(dependency)
 		dependency.StagingLocation = gs.EvalStagingLocation(dependency)
+		dependency.CacheLocation = gs.EvalCacheLocation(dependency)
+		dependency.TmpLocation = gs.EvalTmpLocation(dependency)
+		dependency.TmpExtractLocation = gs.EvalTmpExtractLocation(dependency)
 	}
 
 	return dependency, nil
@@ -46,10 +50,17 @@ func (gs *Supplier) WriteDependencyProfileD(dependencyName string, content strin
 
 func (gs *Supplier) ReadCachedDependencies() error {
 
+	//clean up Cache
 	if gs.LogstashConfig.Buildpack.NoCache {
-		util.RemoveAllContents(gs.Stager.CacheDir())
+		util.RemoveAllContents(gs.Stager.CacheDir()) // rm -r cache_dir/*
+	}else {
+		//if dependency dir with current supplier version doesn't exist delete all content in cache
+		// cache_dir/dependencies/[supplier_version]/
+		parentDir := filepath.Dir(gs.DepCacheDir)
+		if _, err := os.Stat(parentDir); os.IsNotExist(err) {
+			util.RemoveAllContents(gs.Stager.CacheDir()) // rm -r cache_dir/*
+		}
 	}
-
 	gs.CachedDeps = make(map[string]string)
 	os.MkdirAll(gs.DepCacheDir,0755)
 
@@ -71,29 +82,168 @@ func (gs *Supplier) ReadCachedDependencies() error {
 func (gs *Supplier) InstallDependency(dependency Dependency) error {
 	var err error
 
-	dep := libbuildpack.Dependency{Name: dependency.Name, Version: dependency.Version}
-
 	//check if there are other cached versions of the same dependency
 	for cachedDep := range gs.CachedDeps{
-		if cachedDep != dependency.DirName && strings.HasPrefix(cachedDep, dependency.Name + "-") {
+		if strings.HasPrefix(cachedDep, dependency.Name + "-") && cachedDep != dependency.FullName{
 			gs.Log.Debug(fmt.Sprintf("--> deleting unused dependency version '%s' from application cache", cachedDep))
 			gs.CachedDeps[cachedDep] = "deleted"
 			os.RemoveAll(filepath.Join(gs.DepCacheDir, cachedDep))
 		}
 	}
 
-	if err = gs.Manifest.InstallDependencyWithCache(dep, filepath.Join(gs.DepCacheDir,dependency.DirName), dependency.StagingLocation); err != nil {
-		gs.Log.Error("Error installing '%s': %s", dependency.Name, err.Error())
+	//check cache dir
+	cacheDir := filepath.Dir(dependency.CacheLocation)
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		return err
 	}
 
-	if gs.LogstashConfig.Buildpack.NoCache {
-		os.RemoveAll(filepath.Join(gs.DepCacheDir,dependency.DirName))
+	//set up manifest dependency
+	manifestDependency := libbuildpack.Dependency{Name: dependency.Name, Version: dependency.Version}
+
+	entry, err := gs.Manifest.GetEntry(manifestDependency)
+	if err != nil {
+		return err
 	}
 
-	gs.CachedDeps[dependency.DirName] = "in use"
+	if _, err := os.Stat(dependency.CacheLocation); os.IsNotExist(err) { //not cached
+
+		tarball := dependency.TmpLocation
+
+		gs.Log.BeginStep("Installing %s %s", manifestDependency.Name, manifestDependency.Version)
+		err = gs.Manifest.FetchDependency(manifestDependency, tarball)
+		if err != nil {
+			return err
+		}
+
+		err = gs.Manifest.WarnNewerPatch(manifestDependency)
+		if err != nil {
+			return err
+		}
+
+		err = gs.Manifest.WarnEndOfLife(manifestDependency)
+		if err != nil {
+			return err
+		}
+
+		//extract tarball
+		extractLocation := dependency.CacheLocation
+		if dependency.DoCompile{
+			extractLocation = dependency.TmpExtractLocation
+		}
+
+		err = os.MkdirAll(extractLocation, 0755)
+		if err != nil {
+			return err
+		}
+
+		if strings.HasSuffix(entry.URI, ".zip") {
+			err = libbuildpack.ExtractZip(tarball, extractLocation)
+		} else if strings.HasSuffix(entry.URI, ".tar.gz") {
+			err = libbuildpack.ExtractTarGz(tarball, extractLocation)
+		} else {
+			err = os.Rename(tarball, extractLocation)
+		}
+		if err != nil{
+			gs.Log.Error("Error extracting '%s': %s", dependency.Name, err.Error())
+			return err
+		}
+
+		//compile dependency
+		if dependency.DoCompile{
+			gs.CompileDependency(dependency, extractLocation, dependency.CacheLocation)
+		}
+
+	}else{ //cached
+		gs.Log.BeginStep("Installing %s %s from application cache", manifestDependency.Name, manifestDependency.Version)
+	}
+
+	// copy from cache to Stage
+	err = gs.CopyToStage(dependency)
+	if err != nil{
+		gs.Log.Error("Error copying '%s' to stage: %s", dependency.Name, err.Error())
+		return err
+	}
+
+	//remove cache if defined
+	if gs.LogstashConfig.Buildpack.NoCache {
+		os.RemoveAll(filepath.Join(gs.DepCacheDir,dependency.FullName))
+	}
+
+	//register dependency
+	gs.CachedDeps[dependency.FullName] = "in use"
 
 	return nil
+}
+
+func (gs *Supplier) CopyToStage(dep Dependency) error{
+	_, err := exec.Command("cp", "-r", dep.CacheLocation + "/.", dep.StagingLocation ).Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix string) error {
+
+	//configure
+	gs.Log.BeginStep("Starting Compilation of %s", dep.FullName)
+
+	gs.Log.Info("Step 1 of 3: configure ...")
+	cmd := exec.Command("./configure", fmt.Sprintf("--prefix=%s",prefix) )
+	cmd.Dir = makeDir
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
+		go gs.copyOutput(stdout, "stdout")
+		go gs.copyOutput(stderr, "stderr")
+	}
+
+	cmd.Wait()
+
+	//make
+	gs.Log.Info("Step 2 of 3: make ...")
+	cmd = exec.Command("make", "-j", "8")
+
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
+		go gs.copyOutput(stdout, "stdout")
+		go gs.copyOutput(stderr, "stderr")
+	}
+	cmd.Wait()
+
+	//make
+	gs.Log.Info("Step 3 of 3: make install ...")
+	cmd = exec.Command("make", "install")
+
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
+		go gs.copyOutput(stdout, "stdout")
+		go gs.copyOutput(stderr, "stderr")
+	}
+	cmd.Wait()
+
+	gs.Log.Info("Compilation of %s done", dep.FullName)
+
+	return nil
+
 }
 
 func (gs *Supplier) RemoveUnusedDependencies () error{
@@ -139,12 +289,25 @@ func (gs *Supplier) parseDependencyVersion(dependency Dependency, partialDepende
 }
 
 func (gs *Supplier) EvalRuntimeLocation(dependency Dependency) string {
-	return filepath.Join(gs.Stager.DepsIdx(), dependency.DirName)
+	return filepath.Join(gs.Stager.DepsIdx(), dependency.FullName)
 }
 
 func (gs *Supplier) EvalStagingLocation(dependency Dependency) string {
-	return filepath.Join(gs.Stager.DepDir(), dependency.DirName)
+	return filepath.Join(gs.Stager.DepDir(), dependency.FullName)
 }
+
+func (gs *Supplier) EvalCacheLocation(dependency Dependency) string {
+	return filepath.Join(gs.DepCacheDir, dependency.FullName)
+}
+
+func (gs *Supplier) EvalTmpLocation(dependency Dependency) string {
+	return filepath.Join(gs.DepTmpDir, dependency.FullName)
+}
+
+func (gs *Supplier) EvalTmpExtractLocation(dependency Dependency) string {
+	return filepath.Join(gs.DepTmpExtractDir, dependency.FullName)
+}
+
 
 func (gs *Supplier) WriteScript(scriptName, scriptContents string) error {
 	scriptsDir := filepath.Join(gs.Stager.DepDir(), "scripts")

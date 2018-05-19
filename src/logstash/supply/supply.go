@@ -22,6 +22,10 @@ type Manifest interface {
 	InstallDependencyWithCache(libbuildpack.Dependency, string, string) error
 	InstallOnlyVersion(string, string) error
 	IsCached() bool
+	WarnNewerPatch(libbuildpack.Dependency) error
+	WarnEndOfLife(libbuildpack.Dependency) error
+	GetEntry(libbuildpack.Dependency) (*libbuildpack.ManifestEntry, error)
+	FetchDependency(libbuildpack.Dependency, string) error
 }
 
 type Stager interface {
@@ -36,12 +40,15 @@ type Stager interface {
 }
 
 type Supplier struct {
+	Version            string
 	Stager             Stager
 	Manifest           Manifest
 	Log                *libbuildpack.Logger
 	BuildpackDir       string
 	CachedDeps         map[string]string
 	DepCacheDir        string
+	DepTmpDir          string
+	DepTmpExtractDir   string
 	GTE                Dependency
 	Jq                 Dependency
 	Ofelia             Dependency
@@ -62,19 +69,26 @@ type Supplier struct {
 }
 
 type Dependency struct {
-	Name            string
-	DirName         string
-	Version         string
-	VersionParts    int
-	ConfigVersion   string
-	RuntimeLocation string
-	StagingLocation string
+	Name               string
+	Version            string
+	FullName           string
+	VersionParts       int
+	ConfigVersion      string
+	RuntimeLocation    string
+	StagingLocation    string
+	CacheLocation      string
+	TmpLocation        string
+	TmpExtractLocation string
+	DoCompile          bool
 }
 
 func Run(gs *Supplier) error {
 
 	//Init maps for the Installation
-	gs.DepCacheDir = filepath.Join(gs.Stager.CacheDir(), "dependencies")
+	gs.Version = "v1"
+	gs.DepCacheDir = filepath.Join(gs.Stager.CacheDir(), "dependencies", gs.Version)
+	gs.DepTmpDir = filepath.Join("/tmp", "dependencies", gs.Version)
+	gs.DepTmpExtractDir = filepath.Join("/tmp", "dependencies", gs.Version, "extracted")
 	gs.PluginsToInstall = make(map[string]string)
 	gs.TemplatesToInstall = []conf.Template{}
 
@@ -133,9 +147,6 @@ func Run(gs *Supplier) error {
 			return err
 		}
 		if err := gs.InstallDependencyCurator(); err != nil {
-			return err
-		}
-		if err := gs.CompilePython3(); err != nil {
 			return err
 		}
 		if err := gs.PipInstallCurator(); err != nil {
@@ -458,7 +469,7 @@ func (gs *Supplier) EvalEnvironment() error {
 func (gs *Supplier) InstallDependencyGTE() error {
 	var err error
 
-	gs.GTE, err = gs.NewDependency("gte", 3, "")
+	gs.GTE, err = gs.NewDependency("gte", 3, "", false)
 	if err != nil {
 		return err
 	}
@@ -482,7 +493,7 @@ func (gs *Supplier) InstallDependencyGTE() error {
 func (gs *Supplier) InstallDependencyJq() error {
 	var err error
 
-	gs.Jq, err = gs.NewDependency("jq", 3, "")
+	gs.Jq, err = gs.NewDependency("jq", 3, "", false)
 	if err != nil {
 		return err
 	}
@@ -504,7 +515,7 @@ func (gs *Supplier) InstallDependencyJq() error {
 
 func (gs *Supplier) InstallDependencyOfelia() error {
 	var err error
-	gs.Ofelia, err = gs.NewDependency("ofelia", 3, "")
+	gs.Ofelia, err = gs.NewDependency("ofelia", 3, "", false)
 	if err != nil {
 		return err
 	}
@@ -527,7 +538,7 @@ func (gs *Supplier) InstallDependencyOfelia() error {
 func (gs *Supplier) InstallDependencyPython3() error {
 
 	var err error
-	gs.Python3, err = gs.NewDependency("python3", 3, "")
+	gs.Python3, err = gs.NewDependency("python3", 3, "", true)
 	if err != nil {
 		gs.Log.Error("Error InstallDependencyPython3 0: %s", err.Error())
 		return err
@@ -539,9 +550,9 @@ func (gs *Supplier) InstallDependencyPython3() error {
 	}
 
 	content := util.TrimLines(fmt.Sprintf(`
-				export PYTHONHOME=$DEPS_DIR/%s/%s
+				export PYTHONHOME=$DEPS_DIR/%s
 				PATH=${PYTHONHOME}/bin:${PATH}
-				`, gs.Stager.DepsIdx(),  "python3"))
+				`, gs.Python3.RuntimeLocation))
 
 	if err := gs.WriteDependencyProfileD(gs.Python3.Name, content); err != nil {
 		gs.Log.Error("Error InstallDependencyPython3 2: %s", err.Error())
@@ -553,37 +564,10 @@ func (gs *Supplier) InstallDependencyPython3() error {
 	return nil
 }
 
-func (gs *Supplier) CompilePython3() error {
-
-	scriptName := "compile_python3"
-	content := util.TrimLines(fmt.Sprintf(`
-				#!/bin/bash
-				CPUS=` + "`grep -c ^processor /proc/cpuinfo`" + `
-				cd %s/python3
-				./configure --prefix=%s/python3
-				make -j${CPUS}
-				make install
-				`,  filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Stager.DepDir())))
-
-	if err := gs.WriteScript(scriptName, content); err != nil {
-		gs.Log.Error("Error CompilePython3 0: %s", err.Error())
-		return err
-	}
-
-	if err := gs.ExecScript(scriptName); err != nil {
-		gs.Log.Error("Error CompilePython3 1: %s", err.Error())
-		return err
-	}
-
-	gs.Log.Info("CompilePython3 done")
-
-	return nil
-}
-
 func (gs *Supplier) InstallDependencyCurator() error {
 
 	var err error
-	gs.Curator, err = gs.NewDependency("curator", 3, "")
+	gs.Curator, err = gs.NewDependency("curator", 3, "", false)
 	if err != nil {
 		gs.Log.Error("Error InstallDependencyCurator 0: %s", err.Error())
 		return err
@@ -613,12 +597,12 @@ func (gs *Supplier) PipInstallCurator() error {
 	scriptName := "pip_install_curator"
 	content := util.TrimLines(fmt.Sprintf(`
 				#!/bin/bash
-				export PATH=%s/python3/bin:$PATH
+				export PATH=%s/bin:$PATH
     			# --no-index prevents contacting pypi to download packages
     			# --find-links tells pip where to look for the dependancies
     			pip3 install --no-index --find-links %s/dependencies --install-option="--prefix=%s/curator" elasticsearch-curator -v
 				pip list
-				`,  filepath.Join(gs.Stager.DepDir()), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir()) ))
+				`, filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir())))
 
 	if err := gs.WriteScript(scriptName, content); err != nil {
 		gs.Log.Error("Error WriteScript %s: %s", scriptName, err.Error())
@@ -679,13 +663,12 @@ func (gs *Supplier) PrepareCurator() error {
 
 	}
 
-
 	return nil
 }
 
 func (gs *Supplier) InstallDependencyOpenJdk() error {
 	var err error
-	gs.OpenJdk, err = gs.NewDependency("openjdk", 3, "")
+	gs.OpenJdk, err = gs.NewDependency("openjdk", 3, "", false)
 	if err != nil {
 		return err
 	}
@@ -709,7 +692,7 @@ func (gs *Supplier) InstallDependencyXPack() error {
 
 	//Install x-pack from S3
 	var err error
-	gs.XPack, err = gs.NewDependency("x-pack", 3, gs.LogstashConfig.Version) //same version as Logstash
+	gs.XPack, err = gs.NewDependency("x-pack", 3, gs.LogstashConfig.Version, false) //same version as Logstash
 	if err != nil {
 		return err
 	}
@@ -725,7 +708,7 @@ func (gs *Supplier) InstallDependencyLogstashPlugins() error {
 
 	//Install logstash-plugins from S3
 	var err error
-	gs.LogstashPlugins, err = gs.NewDependency("logstash-plugins", 3, gs.LogstashConfig.Version) //same version as Logstash
+	gs.LogstashPlugins, err = gs.NewDependency("logstash-plugins", 3, gs.LogstashConfig.Version, false) //same version as Logstash
 	if err != nil {
 		return err
 	}
@@ -739,7 +722,7 @@ func (gs *Supplier) InstallDependencyLogstashPlugins() error {
 
 func (gs *Supplier) InstallLogstash() error {
 	var err error
-	gs.Logstash, err = gs.NewDependency("logstash", 3, gs.LogstashConfig.Version)
+	gs.Logstash, err = gs.NewDependency("logstash", 3, gs.LogstashConfig.Version, false)
 	if err != nil {
 		return err
 	}
