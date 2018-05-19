@@ -176,8 +176,9 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 }
 
 func (gs *Supplier) CopyToStage(dep Dependency) error{
-	_, err := exec.Command("cp", "-r", dep.CacheLocation + "/.", dep.StagingLocation ).Output()
+	out , err := exec.Command("cp", "-r", dep.CacheLocation + "/.", dep.StagingLocation ).Output()
 	if err != nil {
+		gs.Log.Error(string(out));
 		return err
 	}
 	return nil
