@@ -192,26 +192,18 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	gs.Log.Info("Step 1 of 3: configure ...")
 	cmd := exec.Command("/bin/sh", filepath.Join(makeDir, "configure"), fmt.Sprintf("--prefix=%s",prefix) )
 	cmd.Dir = makeDir
-	gs.Log.Info(fmt.Sprintf("--prefix=%s",prefix))
 	stdout, err := cmd.StdoutPipe()
-	gs.Log.Info("1")
 	if err != nil {
-		gs.Log.Info("1.0")
 		return err
 	}
-	gs.Log.Info("2")
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		gs.Log.Info("2.0")
 		return err
 	}
-	gs.Log.Info("3")
 	err = cmd.Start()
 	if err != nil {
-		gs.Log.Info("3.0")
 		return err
 	}
-	gs.Log.Info("4")
 	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
 		go gs.copyOutput(stdout, "stdout")
 		go gs.copyOutput(stderr, "stderr")
@@ -222,6 +214,15 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	//make
 	gs.Log.Info("Step 2 of 3: make ...")
 	cmd = exec.Command("make", "-j", "8")
+	cmd.Dir = makeDir
+	stdout, err = cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	stderr, err = cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
 
 	err = cmd.Start()
 	if err != nil {
@@ -232,10 +233,21 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 		go gs.copyOutput(stderr, "stderr")
 	}
 	cmd.Wait()
+	gs.Log.Info("5")
 
 	//make
 	gs.Log.Info("Step 3 of 3: make install ...")
 	cmd = exec.Command("make", "install")
+	cmd.Dir = makeDir
+	stderr, err = cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
 
 	err = cmd.Start()
 	if err != nil {
@@ -246,6 +258,7 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 		go gs.copyOutput(stderr, "stderr")
 	}
 	cmd.Wait()
+	gs.Log.Info("6")
 
 	gs.Log.Info("Compilation of %s done", dep.FullName)
 
