@@ -192,20 +192,26 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	gs.Log.Info("Step 1 of 3: configure ...")
 	cmd := exec.Command("./configure", fmt.Sprintf("--prefix=%s",prefix) )
 	cmd.Dir = makeDir
-
+	gs.Log.Info(fmt.Sprintf("--prefix=%s",prefix))
 	stdout, err := cmd.StdoutPipe()
+	gs.Log.Info("1")
 	if err != nil {
+		gs.Log.Info("1.0")
 		return err
 	}
+	gs.Log.Info("2")
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
+		gs.Log.Info("2.0")
 		return err
 	}
+	gs.Log.Info("3")
 	err = cmd.Start()
 	if err != nil {
+		gs.Log.Info("3.0")
 		return err
 	}
-
+	gs.Log.Info("4")
 	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
 		go gs.copyOutput(stdout, "stdout")
 		go gs.copyOutput(stderr, "stderr")
