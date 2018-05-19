@@ -262,16 +262,16 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	}
 	gs.Log.Info("5")
 
-	//make
+	//make install
 	gs.Log.Info("Step 3 of 3: make install ...")
 	cmd = exec.Command("make", "install")
 	cmd.Dir = makeDir
-	stderr, err = cmd.StderrPipe()
+	stdout, err = cmd.StdoutPipe()
 	if err != nil {
 		return err
 	}
 
-	err = cmd.Start()
+	stderr, err = cmd.StderrPipe()
 	if err != nil {
 		return err
 	}
