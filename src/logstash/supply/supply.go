@@ -601,7 +601,7 @@ func (gs *Supplier) PipInstallCurator() error {
     			# --no-index prevents contacting pypi to download packages
     			# --find-links tells pip where to look for the dependancies
     			pip3 install --no-index --find-links %s/dependencies --install-option="--prefix=%s/curator" elasticsearch-curator -v
-				pip list
+				pip3 list
 				`, filepath.Join(gs.Python3.StagingLocation), filepath.Join(gs.Curator.StagingLocation), filepath.Join(gs.Stager.DepDir())))
 
 	if err := gs.WriteScript(scriptName, content); err != nil {

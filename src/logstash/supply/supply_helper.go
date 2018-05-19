@@ -389,9 +389,15 @@ func (gs *Supplier) ExecScript(scriptName string) error {
 		return err
 	}
 
-	go gs.copyOutput(stdout, "stdout")
-	go gs.copyOutput(stderr, "stderr")
-	cmd.Wait()
+	if strings.ToLower(gs.LogstashConfig.Buildpack.LogLevel) == "debug" {
+		go gs.copyOutput(stdout, "stdout")
+		go gs.copyOutput(stderr, "stderr")
+	}
+	
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
