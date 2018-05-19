@@ -151,7 +151,7 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 
 		gs.LsDir(extractLocation)
 		gs.LsDir(dependency.CacheLocation)
-		
+
 		if err != nil{
 			gs.Log.Error("Error extracting '%s': %s", dependency.Name, err.Error())
 			return err
@@ -159,7 +159,7 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 
 		//compile dependency
 		if dependency.DoCompile{
-			gs.CompileDependency(dependency, extractLocation, dependency.CacheLocation)
+			gs.CompileDependency(dependency, filepath.Join(extractLocation, gs.Python3.Name), dependency.CacheLocation)
 		}
 
 	}else{ //cached
