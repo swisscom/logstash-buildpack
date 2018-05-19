@@ -140,6 +140,7 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 			err = libbuildpack.ExtractZip(tarball, extractLocation)
 		} else if strings.HasSuffix(entry.URI, ".tar.gz") {
 			err = libbuildpack.ExtractTarGz(tarball, extractLocation)
+				gs.Log.Error("libbuildpack.ExtractTarGz")
 		} else {
 			err = os.Rename(tarball, extractLocation)
 		}
@@ -147,6 +148,10 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 		gs.Log.Info(extractLocation)
 		gs.Log.Info(tarball)
 		gs.Log.Info(dependency.CacheLocation)
+
+		gs.LsDir(extractLocation)
+		gs.LsDir(dependency.CacheLocation)
+		
 		if err != nil{
 			gs.Log.Error("Error extracting '%s': %s", dependency.Name, err.Error())
 			return err
@@ -185,6 +190,16 @@ func (gs *Supplier) CopyToStage(dep Dependency) error{
 		gs.Log.Error(string(out));
 		return err
 	}
+	return nil
+}
+
+func (gs *Supplier) LsDir(dir string) error{
+	out , err := exec.Command("ls", "-al", dir ).Output()
+	if err != nil {
+		gs.Log.Error(string(out));
+		return err
+	}
+	gs.Log.Info(string(out));
 	return nil
 }
 
