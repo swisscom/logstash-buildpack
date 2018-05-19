@@ -140,7 +140,6 @@ func (gs *Supplier) InstallDependency(dependency Dependency) error {
 			err = libbuildpack.ExtractZip(tarball, extractLocation)
 		} else if strings.HasSuffix(entry.URI, ".tar.gz") {
 			err = libbuildpack.ExtractTarGz(tarball, extractLocation)
-				gs.Log.Error("libbuildpack.ExtractTarGz")
 		} else {
 			err = os.Rename(tarball, extractLocation)
 		}
@@ -259,7 +258,6 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 		gs.Log.Info("'Make' of %s failed", dep.FullName)
 		return err
 	}
-	gs.Log.Info("5")
 
 	//make install
 	gs.Log.Info("Step 3 of 3: make install ...")
@@ -291,8 +289,6 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 		gs.Log.Info("'Make Install' of %s failed", dep.FullName)
 		return err
 	}
-	gs.Log.Info("6")
-
 	gs.Log.Info("Compilation of %s done", dep.FullName)
 
 	return nil

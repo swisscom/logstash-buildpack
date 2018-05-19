@@ -540,12 +540,10 @@ func (gs *Supplier) InstallDependencyPython3() error {
 	var err error
 	gs.Python3, err = gs.NewDependency("python3", 3, "", true)
 	if err != nil {
-		gs.Log.Error("Error InstallDependencyPython3 0: %s", err.Error())
 		return err
 	}
 
 	if err := gs.InstallDependency(gs.Python3); err != nil {
-		gs.Log.Error("Error InstallDependencyPython3 1: %s", err.Error())
 		return err
 	}
 
@@ -555,11 +553,8 @@ func (gs *Supplier) InstallDependencyPython3() error {
 				`, gs.Python3.RuntimeLocation))
 
 	if err := gs.WriteDependencyProfileD(gs.Python3.Name, content); err != nil {
-		gs.Log.Error("Error InstallDependencyPython3 2: %s", err.Error())
 		return err
 	}
-
-	gs.Log.Info("InstallDependencyPython3 done")
 
 	return nil
 }
@@ -569,12 +564,10 @@ func (gs *Supplier) InstallDependencyCurator() error {
 	var err error
 	gs.Curator, err = gs.NewDependency("curator", 3, "", false)
 	if err != nil {
-		gs.Log.Error("Error InstallDependencyCurator 0: %s", err.Error())
 		return err
 	}
 
 	if err := gs.InstallDependency(gs.Curator); err != nil {
-		gs.Log.Error("Error InstallDependencyCurator 1: %s", err.Error())
 		return err
 	}
 
@@ -585,10 +578,8 @@ func (gs *Supplier) InstallDependencyCurator() error {
 				`, gs.Stager.DepsIdx(), "curator"))
 
 	if err := gs.WriteDependencyProfileD(gs.Curator.Name, content); err != nil {
-		gs.Log.Error("Error InstallDependencyCurator 2: %s", err.Error())
 		return err
 	}
-	gs.Log.Info("InstallDependencyCurator done")
 	return nil
 }
 
@@ -613,8 +604,6 @@ func (gs *Supplier) PipInstallCurator() error {
 		gs.Log.Error("Error ExecScript %s: %s", scriptName, err.Error())
 		return err
 	}
-
-	gs.Log.Info("PipInstallCurator done")
 
 	return nil
 }
