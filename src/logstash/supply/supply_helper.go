@@ -230,7 +230,7 @@ func (gs *Supplier) CompileDependency(dep Dependency, makeDir string, prefix str
 	}
 
 	//make
-	gs.Log.Info("Step 2 of 3: make ... (may take a few minutes!)")
+	gs.Log.Info("Step 2 of 3: make ... (can take up to three minutes!)")
 	cmd = exec.Command("make", "-j", "8")
 	cmd.Dir = makeDir
 	stdout, err = cmd.StdoutPipe()
