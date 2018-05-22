@@ -134,33 +134,41 @@ func Run(gs *Supplier) error {
 
 	//Install Dependencies
 	if err := gs.InstallDependencyGTE(); err != nil {
+		gs.Log.Error("Error installing dependency GTE: %s", err.Error())
 		return err
 	}
 	if err := gs.InstallDependencyJq(); err != nil {
+		gs.Log.Error("Error installing dependency JQ: %s", err.Error())
 		return err
 	}
 	if gs.LogstashConfig.Curator.Install {
 		if err := gs.InstallDependencyOfelia(); err != nil {
+			gs.Log.Error("Error installing dependency Ofelia: %s", err.Error())
 			return err
 		}
 		if err := gs.InstallDependencyPython3(); err != nil {
+			gs.Log.Error("Error installing dependency Python3: %s", err.Error())
 			return err
 		}
 		if err := gs.InstallDependencyCurator(); err != nil {
+			gs.Log.Error("Error installing dependency Curator: %s", err.Error())
 			return err
 		}
 		if err := gs.PipInstallCurator(); err != nil {
+			gs.Log.Error("Error installing dependency Pip Install Curator: %s", err.Error())
 			return err
 		}
 
 	}
 
 	if err := gs.InstallDependencyOpenJdk(); err != nil {
+		gs.Log.Error("Error installing dependency Open JDK: %s", err.Error())
 		return err
 	}
 
 	//Prepare Staging Environment
 	if err := gs.PrepareStagingEnvironment(); err != nil {
+		gs.Log.Error("Error preparing Staging environment: %s", err.Error())
 		return err
 	}
 
@@ -172,16 +180,19 @@ func Run(gs *Supplier) error {
 
 	//Install User Certificates
 	if err := gs.InstallUserCertificates(); err != nil {
+		gs.Log.Error("Error installing user certificates: %s", err.Error())
 		return err
 	}
 
 	//Install Curator/Ofelia
 	if err := gs.PrepareCurator(); err != nil {
+		gs.Log.Error("Error preparing Curator: %s", err.Error())
 		return err
 	}
 
 	//Install Logstash
 	if err := gs.InstallLogstash(); err != nil {
+		gs.Log.Error("Error installing Logstash: %s", err.Error())
 		return err
 	}
 
@@ -192,6 +203,7 @@ func Run(gs *Supplier) error {
 		for key, _ := range gs.PluginsToInstall {
 			if strings.HasPrefix(key, "x-pack") { //is x-pack plugin
 				if err := gs.InstallDependencyXPack(); err != nil {
+					gs.Log.Error("Error installing dependency X-Pack: %s", err.Error())
 					return err
 				}
 				break
@@ -201,6 +213,7 @@ func Run(gs *Supplier) error {
 		for key, _ := range gs.PluginsToInstall {
 			if !strings.HasPrefix(key, "x-pack") { //other than  x-pack plugin
 				if err := gs.InstallDependencyLogstashPlugins(); err != nil {
+					gs.Log.Error("Error installing dependency 'Logstash plugins': %s", err.Error())
 					return err
 				}
 				break
@@ -209,18 +222,21 @@ func Run(gs *Supplier) error {
 
 		//Install Logstash Plugins
 		if err := gs.InstallLogstashPlugins(); err != nil {
+			gs.Log.Error("Error installing Logstash plugins: %s", err.Error())
 			return err
 		}
 	}
 
 	//Install Logstash Plugins
 	if err := gs.ListLogstashPlugins(); err != nil {
+		gs.Log.Error("Error listing Logstash plugins: %s", err.Error())
 		return err
 	}
 
 	//check Logstash config
 	if gs.LogstashConfig.ConfigCheck {
 		if err := gs.CheckLogstash(); err != nil {
+			gs.Log.Error("Error checking configuration : %s", err.Error())
 			return err
 		}
 
