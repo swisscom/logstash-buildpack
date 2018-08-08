@@ -169,7 +169,7 @@ certificates:
 - elasticsearch
 curator:
   install: true
-  schedule: "0 5 2 * * *"
+  schedule: "0 5 * * *"
 ```
 
 
