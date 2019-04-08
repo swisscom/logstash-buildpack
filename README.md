@@ -1,3 +1,7 @@
+# Deprication
+This buildpack is no longer maintained. Please use the official Docker images instead.
+
+
 # Logstash Buildpack for Cloud Foundry
 
 This buildpack allows to deploy [Logstash](https://www.elastic.co/products/logstash) as an app in Cloud Foundry.
