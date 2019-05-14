@@ -1,5 +1,6 @@
 # Deprication
 This buildpack is no longer maintained. Please use the official Docker images instead.
+https://docs.developer.swisscom.com/service-offerings/logstash-docker.html
 
 
 # Logstash Buildpack for Cloud Foundry
