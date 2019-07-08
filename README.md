@@ -1,5 +1,12 @@
 # Deprication
-This buildpack is no longer maintained. Please use the official Docker images instead.
+
+## This buildpack is no longer maintained. Please use the official Docker images instead.
+## [Here is a guide on how to run logstash as a docker image on CloudFoundry](https://docs.developer.swisscom.com/service-offerings/logstash-docker.html)
+
+
+
+
+
 
 
 # Logstash Buildpack for Cloud Foundry
